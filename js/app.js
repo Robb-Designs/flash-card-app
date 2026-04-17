@@ -17,12 +17,12 @@
 
 
 // Imports
-import { init as storeInit, getLastActiveDeck } from './store.js';
+import { init as storeInit, getLastActiveDeck, getThemePreference, saveThemePreference } from './store.js';
 import { loadDecks, createDeck, updateDeck, deleteDeck, selectDeck } from './decks.js';
 import { loadCards, createCard, deleteCard } from './cards.js';
 import { startStudy, getCurrentCard, nextCard, prevCard, flipCard, restartStudy, exitStudy, getIsFlipped, getCurrentIndex, getTotalCards } from './study.js';
 import { filterCards } from './search.js';
-import { renderHomeView, renderDeckView, renderStudyView, syncStudyFlip } from './ui.js';
+import { renderHomeView, renderDeckView, renderStudyView, syncStudyFlip, syncThemeToggleState } from './ui.js';
 import { initKeyboard } from './keyboard.js';
 
 // Global state
@@ -31,6 +31,8 @@ const state = {
     activeDeckId: null,
     decks: [],
     searchQuery: '',
+    themePreference: 'system',
+    effectiveTheme: 'light',
     modal: null,
     modalInputValue: '',
     modalFormValues: {},
@@ -41,6 +43,8 @@ let toastCounter = 0;
 const toastTimerMap = new Map();
 let modalReturnFocusEl = null;
 let lastRenderedView = null;
+let systemThemeMediaQuery = null;
+let themeTransitionTimer = null;
 
 // Initialization
 function init() {
@@ -50,6 +54,9 @@ function init() {
 
     // Initialize keyboard shortcuts
     initKeyboard();
+
+    // Initialize theme preference and root theme attribute
+    initializeTheme();
 
     // Load decks
     state.decks = loadDecks();
@@ -89,6 +96,9 @@ function registerEventListeners() {
     document.addEventListener('study:prev', handleStudyUpdate);
     document.addEventListener('study:shuffle', handleStudyUpdate);
     document.addEventListener('study:complete', handleStudyUpdate);
+
+    systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    systemThemeMediaQuery.addEventListener('change', handleSystemThemeChange);
 }
 
 // UI event handlers
@@ -110,6 +120,14 @@ function handleDocumentClick(event) {
                 selectDeck(id);
             }
             break;
+
+        case 'toggle-theme': {
+            const nextPreference = getNextThemePreference(state.themePreference, state.effectiveTheme);
+            state.themePreference = saveThemePreference(nextPreference);
+            applyThemePreference(state.themePreference, true);
+            syncThemeToggleState({ effectiveTheme: state.effectiveTheme });
+            break;
+        }
 
         case 'create-deck': {
             openModal({
@@ -691,6 +709,71 @@ function handleStudyExit(event) {
     render();
 }
 
+function initializeTheme() {
+    state.themePreference = getThemePreference();
+    applyThemePreference(state.themePreference);
+}
+
+function handleSystemThemeChange() {
+    if (state.themePreference !== 'system') {
+        return;
+    }
+
+    applyThemePreference('system');
+    render();
+}
+
+function getSystemPrefersDark() {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function resolveEffectiveTheme(preference) {
+    if (preference === 'dark') {
+        return 'dark';
+    }
+
+    if (preference === 'light') {
+        return 'light';
+    }
+
+    return getSystemPrefersDark() ? 'dark' : 'light';
+}
+
+function applyThemePreference(preference, animate = false) {
+    const root = document.documentElement;
+    const effectiveTheme = resolveEffectiveTheme(preference);
+
+    if (animate) {
+        startThemeTransition(root);
+    }
+
+    root.dataset.theme = effectiveTheme;
+
+    state.themePreference = preference;
+    state.effectiveTheme = effectiveTheme;
+}
+
+function startThemeTransition(root) {
+    root.classList.add('is-theme-transitioning');
+
+    if (themeTransitionTimer) {
+        clearTimeout(themeTransitionTimer);
+    }
+
+    themeTransitionTimer = setTimeout(() => {
+        root.classList.remove('is-theme-transitioning');
+        themeTransitionTimer = null;
+    }, 220);
+}
+
+function getNextThemePreference(currentPreference, effectiveTheme) {
+    if (currentPreference === 'system') {
+        return effectiveTheme === 'dark' ? 'light' : 'dark';
+    }
+
+    return currentPreference === 'dark' ? 'light' : 'dark';
+}
+
 // Render function
 function render() {
     const isViewEntry = lastRenderedView !== state.view;
@@ -700,6 +783,8 @@ function render() {
             // Compute derived data: decks
             const homeData = {
                 decks: state.decks,
+                themePreference: state.themePreference,
+                effectiveTheme: state.effectiveTheme,
                 modal: getRenderModal(),
                 toast: state.toasts,
                 animateEntry: isViewEntry
@@ -717,6 +802,8 @@ function render() {
                 cards: filteredCards,
                 decks: state.decks,
                 searchQuery: state.searchQuery,
+                themePreference: state.themePreference,
+                effectiveTheme: state.effectiveTheme,
                 modal: getRenderModal(),
                 toast: state.toasts,
                 animateEntry: isViewEntry
@@ -735,6 +822,8 @@ function render() {
                 isFlipped: getIsFlipped(), // 🔥 THIS is the fix
                 currentIndex: getCurrentIndex(),
                 totalCards: getTotalCards(),
+                themePreference: state.themePreference,
+                effectiveTheme: state.effectiveTheme,
                 modal: getRenderModal(),
                 toast: state.toasts,
                 animateEntry: isViewEntry

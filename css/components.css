@@ -70,6 +70,63 @@
 	background: var(--color-surface-alt);
 }
 
+.btn-icon {
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: var(--radius-md);
+	font-size: var(--text-base);
+	line-height: 1;
+}
+
+.theme-toggle {
+	position: relative;
+	overflow: hidden;
+}
+
+.theme-toggle-icon-stack {
+	width: 1.05rem;
+	height: 1.05rem;
+	display: grid;
+	place-items: center;
+	transition: transform var(--duration-fast) var(--ease-soft);
+}
+
+.theme-toggle-icon {
+	grid-area: 1 / 1;
+	transition:
+		opacity var(--duration-medium) var(--ease-soft),
+		transform var(--duration-medium) var(--ease-soft);
+}
+
+.theme-toggle-icon-moon {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.theme-toggle-icon-sun {
+	opacity: 0;
+	transform: translateY(22%) scale(0.82);
+}
+
+.theme-toggle.is-dark .theme-toggle-icon-moon {
+	opacity: 0;
+	transform: translateY(-22%) scale(0.82);
+}
+
+.theme-toggle.is-dark .theme-toggle-icon-sun {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.theme-toggle:active .theme-toggle-icon-stack {
+	transform: rotate(-12deg) scale(0.94);
+}
+
+.btn-icon i {
+	pointer-events: none;
+}
+
 .modal-backdrop {
 	position: fixed;
 	inset: 0;

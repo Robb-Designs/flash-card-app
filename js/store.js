@@ -381,3 +381,18 @@ export function saveSettings(patch) {
     write(STORAGE_KEYS.SETTINGS, nextSettings);
     return { ...nextSettings };
 }
+
+export function getThemePreference() {
+    const settings = getSettings();
+    const theme = settings.theme;
+    return theme === 'light' || theme === 'dark' || theme === 'system' ? theme : 'system';
+}
+
+export function saveThemePreference(theme) {
+    if (theme !== 'light' && theme !== 'dark' && theme !== 'system') {
+        throw new Error('Theme must be one of: light, dark, system.');
+    }
+
+    const next = saveSettings({ theme });
+    return next.theme;
+}

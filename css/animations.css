@@ -136,6 +136,13 @@
 	animation: cardItemIn var(--duration-medium) var(--ease-soft) both;
 }
 
+:root.is-theme-transitioning #app,
+:root.is-theme-transitioning #app * {
+	transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+	transition-duration: 220ms;
+	transition-timing-function: var(--ease-soft);
+}
+
 @keyframes modalIn {
 	from {
 		opacity: 0;
@@ -212,7 +219,11 @@
 @media (prefers-reduced-motion: reduce) {
 	.card-flip-inner,
 	.hover-lift,
-	.press-down {
+	.press-down,
+	.theme-toggle-icon,
+	.theme-toggle-icon-stack,
+	:root.is-theme-transitioning #app,
+	:root.is-theme-transitioning #app * {
 		transition-duration: 1ms !important;
 	}
 

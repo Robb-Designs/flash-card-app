@@ -79,6 +79,22 @@ function renderEmptyState(message) {
 	`;
 }
 
+function renderThemeToggleButton(data) {
+    const effectiveTheme = data?.effectiveTheme === 'dark' ? 'dark' : 'light';
+    const nextLabel = effectiveTheme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+	const stateClass = effectiveTheme === 'dark' ? 'is-dark' : 'is-light';
+
+    return `
+			<button class="btn btn-ghost btn-icon theme-toggle ${stateClass}" type="button" data-action="toggle-theme" aria-label="${escapeHtml(nextLabel)}" title="${escapeHtml(nextLabel)}" aria-pressed="${String(effectiveTheme === 'dark')}">
+				<span class="theme-toggle-icon-stack" aria-hidden="true">
+					<i class="fa-solid fa-moon theme-toggle-icon theme-toggle-icon-moon" aria-hidden="true"></i>
+					<i class="fa-solid fa-sun theme-toggle-icon theme-toggle-icon-sun" aria-hidden="true"></i>
+				</span>
+				<span class="sr-only">Toggle theme</span>
+		</button>
+	`;
+}
+
 /**
  * Builds the full home view markup.
  * @param {Object} data - View data, usually including a decks array.
@@ -93,7 +109,12 @@ function renderHomeShell(data) {
 			<aside class="app-sidebar" aria-label="Deck sidebar">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
-						<h1 class="app-title">Flashcards</h1>
+						<div class="sidebar-header-row">
+							<h1 class="app-title">Flashcards</h1>
+							<div class="sidebar-header-actions" aria-label="Display settings">
+								${renderThemeToggleButton(data)}
+							</div>
+						</div>
 						<button class="btn btn-primary hover-lift press-down" type="button" data-action="create-deck">New Deck</button>
 					</div>
 					${renderDeckList(decks)}
@@ -131,7 +152,12 @@ function renderDeckShell(data) {
 			<aside class="app-sidebar" aria-label="Deck sidebar">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
-						<h1 class="app-title">Flashcards</h1>
+						<div class="sidebar-header-row">
+							<h1 class="app-title">Flashcards</h1>
+							<div class="sidebar-header-actions" aria-label="Display settings">
+								${renderThemeToggleButton(data)}
+							</div>
+						</div>
 						<button class="btn btn-primary hover-lift press-down" type="button" data-action="create-deck">New Deck</button>
 					</div>
 					${renderDeckList(Array.isArray(data?.decks) ? data.decks : [])}
@@ -256,6 +282,27 @@ export function syncStudyFlip(isFlipped) {
     }
 
     flipEl.classList.toggle('is-flipped', Boolean(isFlipped));
+}
+
+export function syncThemeToggleState(data = {}) {
+	ensureRoot();
+
+	const effectiveTheme = data?.effectiveTheme === 'dark' ? 'dark' : 'light';
+	const isDark = effectiveTheme === 'dark';
+	const nextLabel = isDark ? 'Switch to light mode' : 'Switch to dark mode';
+
+	const toggles = root.querySelectorAll('[data-action="toggle-theme"]');
+	if (!toggles.length) {
+		return;
+	}
+
+	toggles.forEach((toggle) => {
+		toggle.classList.toggle('is-dark', isDark);
+		toggle.classList.toggle('is-light', !isDark);
+		toggle.setAttribute('aria-pressed', String(isDark));
+		toggle.setAttribute('aria-label', nextLabel);
+		toggle.setAttribute('title', nextLabel);
+	});
 }
 
 /**
