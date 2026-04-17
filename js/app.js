@@ -20,7 +20,7 @@ alert('Hello from app.js!');
 import { init as storeInit, getLastActiveDeck } from './store.js';
 import { loadDecks, createDeck, deleteDeck, selectDeck } from './decks.js';
 import { loadCards, createCard, deleteCard } from './cards.js';
-import { startStudy, getCurrentCard, nextCard, prevCard, flipCard, restartStudy, exitStudy } from './study.js';
+import { startStudy, getCurrentCard, nextCard, prevCard, flipCard, restartStudy, exitStudy, getIsFlipped, getCurrentIndex, getTotalCards } from './study.js';
 import { filterCards } from './search.js';
 import { renderHomeView, renderDeckView, renderStudyView } from './ui.js';
 import { initKeyboard } from './keyboard.js';
@@ -72,6 +72,7 @@ function registerEventListeners() {
     document.addEventListener('deck:deleted', handleDeckDeleted);
     document.addEventListener('card:created', handleCardCreated);
     document.addEventListener('card:deleted', handleCardDeleted);
+    document.addEventListener('study:flip', handleStudyEvent);
     document.addEventListener('study:start', handleStudyStart);
     document.addEventListener('study:exit', handleStudyExit);
     document.addEventListener('study:next', handleStudyUpdate);
@@ -82,6 +83,11 @@ function registerEventListeners() {
 }
 
 // UI event handlers
+function handleStudyEvent(event) {
+    const { deckId, isFlipped } = event.detail;
+    render();
+}
+
 function handleDocumentClick(event) {
     const actionEl = event.target.closest('[data-action]');
     if (!actionEl) return;
@@ -90,6 +96,10 @@ function handleDocumentClick(event) {
     const id = actionEl.dataset.id;
 
     switch (action) {
+        case 'flip-card':
+            console.log('flip triggered'); // 👈 ADD THIS LINE
+            flipCard();
+            break;
         case 'select-deck':
             if (id) {
                 selectDeck(id);
@@ -111,14 +121,13 @@ function handleDocumentClick(event) {
             break;
 
         case 'create-card': {
-            const deckId = id || state.activeDeckId;
-            if (!deckId) break;
+            if (!state.activeDeckId) break;
 
             const front = window.prompt('Front text?');
             const back = window.prompt('Back text?');
 
             if (front && back) {
-                createCard(deckId, front.trim(), back.trim());
+                createCard(state.activeDeckId, front.trim(), back.trim());
             }
             break;
         }
@@ -288,18 +297,19 @@ function render() {
             renderDeckView(deckData);
             break;
 
-        case 'study':
-            // Compute derived data: currentCard
+        case 'study': {
             const currentCard = getCurrentCard();
-            const studyData = {
-                currentCard,
-                deckId: state.activeDeckId
-            };
-            renderStudyView(studyData);
-            break;
 
-        default:
+            renderStudyView({
+                deckId: state.activeDeckId,
+                currentCard,
+                isFlipped: getIsFlipped(), // 🔥 THIS is the fix
+                currentIndex: getCurrentIndex(),
+                totalCards: getTotalCards()
+            });
+
             break;
+        }
     }
 }
 

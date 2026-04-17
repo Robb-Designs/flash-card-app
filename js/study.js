@@ -72,6 +72,18 @@ export function getCurrentCard() {
     return session.cards[session.currentIndex];
 }
 
+export function getIsFlipped() {
+    return session.isFlipped;
+}
+
+export function getCurrentIndex() {
+    return session.currentIndex;
+}
+
+export function getTotalCards() {
+    return session.cards.length;
+}
+
 export function nextCard() {
     if (!session.isActive) return;
 
@@ -105,6 +117,9 @@ export function prevCard() {
 export function flipCard() {
     if (!session.isActive) return;
     session.isFlipped = !session.isFlipped;
+
+    console.log('isFlipped now:', session.isFlipped);
+
     dispatchEvent('study:flip', { deckId: session.deckId, isFlipped: session.isFlipped });
 }
 
