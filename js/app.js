@@ -18,7 +18,7 @@
 alert('Hello from app.js!');
 // Imports
 import { init as storeInit, getLastActiveDeck } from './store.js';
-import { loadDecks, createDeck, deleteDeck, selectDeck } from './decks.js';
+import { loadDecks, createDeck, updateDeck, deleteDeck, selectDeck } from './decks.js';
 import { loadCards, createCard, deleteCard } from './cards.js';
 import { startStudy, getCurrentCard, nextCard, prevCard, flipCard, restartStudy, exitStudy, getIsFlipped, getCurrentIndex, getTotalCards } from './study.js';
 import { filterCards } from './search.js';
@@ -69,6 +69,7 @@ function registerEventListeners() {
     // CustomEvents
     document.addEventListener('deck:selected', handleDeckSelected);
     document.addEventListener('deck:created', handleDeckCreated);
+    document.addEventListener('deck:updated', handleDeckUpdated);
     document.addEventListener('deck:deleted', handleDeckDeleted);
     document.addEventListener('card:created', handleCardCreated);
     document.addEventListener('card:deleted', handleCardDeleted);
@@ -112,6 +113,19 @@ function handleDocumentClick(event) {
                 deleteDeck(id);
             }
             break;
+
+        case 'edit-deck': {
+            if (!id) break;
+
+            const existingDeck = state.decks.find((deck) => deck.id === id);
+            const currentName = existingDeck?.name ?? '';
+            const name = window.prompt('New deck name?', currentName);
+
+            if (name && name.trim()) {
+                updateDeck(id, name.trim());
+            }
+            break;
+        }
 
         case 'create-card': {
             if (!state.activeDeckId) break;
@@ -197,6 +211,17 @@ function handleDeckCreated(event) {
         state.activeDeckId = createdDeckId;
         state.view = 'deck';
         state.searchQuery = '';
+    }
+
+    render();
+}
+
+function handleDeckUpdated(event) {
+    const updatedDeckId = event.detail?.deck?.id ?? null;
+
+    state.decks = loadDecks();
+    if (updatedDeckId) {
+        state.activeDeckId = updatedDeckId;
     }
 
     render();
