@@ -1,0 +1,198 @@
+/*
+ * animations.css
+ * Motion system for calm, tactile interactions.
+ * Transform + opacity only.
+ */
+
+:root {
+	--ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+	--ease-soft: cubic-bezier(0.2, 0, 0.2, 1);
+
+	--duration-fast: 120ms;
+	--duration-medium: 240ms;
+	--duration-slow: 420ms;
+}
+
+/* Card flip */
+.card-flip {
+	perspective: 1000px;
+    transform-style: preserve-3d;
+}
+
+.card-flip-inner {
+    will-change: transform;
+	transform-style: preserve-3d;
+	transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
+}
+
+.card-flip.is-flipped .card-flip-inner {
+	transform: rotateY(180deg);
+}
+
+.card-flip-front,
+.card-flip-back {
+	backface-visibility: hidden;
+}
+
+.card-flip-back {
+	transform: rotateY(180deg);
+}
+
+/* Micro-interactions */
+.hover-lift {
+    will-change: transform;
+	transition: transform var(--duration-fast) var(--ease-soft), opacity var(--duration-fast) var(--ease-soft);
+}
+
+.hover-lift:hover,
+.hover-lift:focus-visible {
+	transform: translateY(-1px);
+}
+
+.press-down {
+    will-change: transform;
+	transition: transform var(--duration-fast) var(--ease-soft), opacity var(--duration-fast) var(--ease-soft);
+}
+
+.press-down:active,
+.press-down.is-pressed {
+	transform: translateY(1px);
+}
+
+/* Fade + slide transitions */
+.fade-in {
+	animation: fadeInSlide var(--duration-medium) var(--ease-soft) both;
+}
+
+.fade-out {
+	animation: fadeOutSlide var(--duration-medium) var(--ease-soft) both;
+}
+
+@keyframes fadeInSlide {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fadeOutSlide {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+/* Study mode transitions */
+.study-enter {
+	animation: studyEnter var(--duration-medium) var(--ease-standard) both;
+}
+
+.study-exit {
+	animation: studyExit var(--duration-medium) var(--ease-soft) both;
+}
+
+@keyframes studyEnter {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes studyExit {
+	from {
+		opacity: 1;
+		transform: translateY(0);
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+	.card-flip-inner,
+	.hover-lift,
+	.press-down {
+		transition-duration: 1ms !important;
+	}
+
+	.card-flip.is-flipped .card-flip-inner,
+	.hover-lift:hover,
+	.hover-lift:focus-visible,
+	.press-down:active,
+	.press-down.is-pressed {
+		transform: none !important;
+	}
+
+	.fade-in,
+	.fade-out,
+	.study-enter,
+	.study-exit {
+		animation-duration: 1ms !important;
+	}
+
+	@keyframes fadeInSlide {
+		from {
+			opacity: 0;
+			transform: none;
+		}
+
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	@keyframes fadeOutSlide {
+		from {
+			opacity: 1;
+			transform: none;
+		}
+
+		to {
+			opacity: 0;
+			transform: none;
+		}
+	}
+
+	@keyframes studyEnter {
+		from {
+			opacity: 0;
+			transform: none;
+		}
+
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+
+	@keyframes studyExit {
+		from {
+			opacity: 1;
+			transform: none;
+		}
+
+		to {
+			opacity: 0;
+			transform: none;
+		}
+	}
+}
