@@ -424,13 +424,19 @@ export function renderDeckList(decks) {
         const deckId = deck?.id ?? '';
         const name = deck?.name ?? 'Untitled Deck';
         const cardCount = Number.isInteger(deck?.cardCount) ? deck.cardCount : 0;
+        const deleteLabel = `Delete deck: ${name || 'Untitled deck'}`;
 
         return `
 			<li>
-				<button class="deck-item hover-lift press-down" type="button" data-action="select-deck" data-id="${escapeHtml(deckId)}">
-					<span class="deck-item-name">${escapeHtml(name)}</span>
-					<span class="deck-item-count">${cardCount}</span>
-				</button>
+				<div class="deck-row">
+					<button class="deck-item hover-lift press-down" type="button" data-action="select-deck" data-id="${escapeHtml(deckId)}">
+						<span class="deck-item-name">${escapeHtml(name)}</span>
+						<span class="deck-item-count">${cardCount}</span>
+					</button>
+					<div class="deck-item-actions" aria-label="Deck actions">
+						<button class="btn btn-ghost press-down deck-item-action-btn" type="button" data-action="delete-deck" data-id="${escapeHtml(deckId)}" aria-label="${escapeHtml(deleteLabel)}">Delete</button>
+					</div>
+				</div>
 			</li>
 		`;
     }).join('');

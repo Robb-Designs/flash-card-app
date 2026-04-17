@@ -2,6 +2,7 @@
 
 import {
     getDecks,
+    getCards,
     getDeck,
     saveDeck,
     setLastActiveDeck,
@@ -12,7 +13,10 @@ import {
  * @returns {Deck[]} Array of deck objects
  */
 export function loadDecks() {
-    return getDecks();
+    return getDecks().map((deck) => ({
+        ...deck,
+        cardCount: getCards(deck.id).length
+    }));
 }
 
 
