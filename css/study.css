@@ -60,7 +60,7 @@
 .study-container .card {
 	width: 100%;
 	max-width: 560px;
-	min-height: 300px;
+	min-height: clamp(240px, 42vh, 320px);
 	padding: var(--space-7);
 	box-shadow: var(--shadow-card);
 }
@@ -131,27 +131,104 @@
 
 @media (max-width: 767px) {
 	.view-study {
-		padding: var(--space-5);
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-start;
+		padding: max(var(--space-4), env(safe-area-inset-top)) var(--space-4) max(var(--space-5), env(safe-area-inset-bottom));
+	}
+
+	.view-study > .study-header {
+		width: 100%;
+		max-width: 560px;
+		margin: 0 auto var(--space-3);
+	}
+
+	.view-study > .study-main.study-container {
+		width: 100%;
+		max-width: 560px;
+		margin: 0 auto;
+	}
+
+	.study-header {
+		grid-template-columns: 1fr auto;
+		grid-template-areas:
+			"left right"
+			"title title";
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-3);
+	}
+
+	.study-header-left {
+		grid-area: left;
+	}
+
+	.study-header-center {
+		grid-area: title;
+	}
+
+	.study-header-right {
+		grid-area: right;
 	}
 
 	.study-container {
-		gap: var(--space-5);
+		gap: var(--space-4);
 	}
 
 	.study-container .card {
-		padding: var(--space-5);
+		min-height: clamp(220px, 48vh, 300px);
+		padding: var(--space-4);
+	}
+
+	.card-flip-front .card-front {
+		font-size: clamp(1.25rem, 6vw, 1.7rem);
+		line-height: 1.3;
+	}
+
+	.card-flip-back .card-back {
+		font-size: clamp(1rem, 5vw, 1.35rem);
+		line-height: 1.4;
 	}
 
 	.study-controls {
-		gap: var(--space-3);
-		justify-content: center;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-2);
+		padding: var(--space-3);
 	}
 
 	.study-title {
 		font-size: var(--text-base);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 
 	.study-progress-text {
+		grid-column: 1 / -1;
+		order: -1;
 		width: 100%;
+		white-space: normal;
+		font-size: var(--text-xs);
+		line-height: var(--leading-normal);
+	}
+}
+
+@media (max-width: 479px) {
+	.study-header {
+		padding: var(--space-2) var(--space-3);
+	}
+
+	.study-controls {
+		grid-template-columns: 1fr;
+	}
+
+	.study-progress-text {
+		order: 0;
+	}
+
+	.study-container .card {
+		min-height: clamp(200px, 44vh, 260px);
 	}
 }

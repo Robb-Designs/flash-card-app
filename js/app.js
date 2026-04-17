@@ -31,6 +31,8 @@ const state = {
     activeDeckId: null,
     decks: [],
     searchQuery: '',
+    isSidebarOpen: false,
+    isMobileNav: false,
     themePreference: 'system',
     effectiveTheme: 'light',
     modal: null,
@@ -44,6 +46,8 @@ const toastTimerMap = new Map();
 let modalReturnFocusEl = null;
 let lastRenderedView = null;
 let systemThemeMediaQuery = null;
+let mobileNavMediaQuery = null;
+let sidebarReturnFocusEl = null;
 let themeTransitionTimer = null;
 
 // Initialization
@@ -99,6 +103,10 @@ function registerEventListeners() {
 
     systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     systemThemeMediaQuery.addEventListener('change', handleSystemThemeChange);
+
+    mobileNavMediaQuery = window.matchMedia('(max-width: 767px)');
+    mobileNavMediaQuery.addEventListener('change', handleMobileNavChange);
+    syncResponsiveNavMode();
 }
 
 // UI event handlers
@@ -119,6 +127,14 @@ function handleDocumentClick(event) {
             if (id) {
                 selectDeck(id);
             }
+            break;
+
+        case 'toggle-sidebar':
+            toggleSidebar(actionEl);
+            break;
+
+        case 'close-sidebar':
+            closeSidebar();
             break;
 
         case 'toggle-theme': {
@@ -394,6 +410,12 @@ function handleDocumentSubmit(event) {
 }
 
 function handleDocumentKeydown(event) {
+    if (event.key === 'Escape' && state.isMobileNav && state.isSidebarOpen && !state.modal) {
+        event.preventDefault();
+        closeSidebar();
+        return;
+    }
+
     if (!state.modal) {
         return;
     }
@@ -464,6 +486,10 @@ function handleDeckSelected(event) {
     state.view = deckId ? 'deck' : 'home';
     state.searchQuery = '';
     state.decks = loadDecks();
+
+    if (state.isMobileNav && state.isSidebarOpen) {
+        closeSidebar({ restoreFocus: false });
+    }
 
     render();
 }
@@ -695,6 +721,9 @@ function handleStudyStart(event) {
     if (deckId) {
         state.activeDeckId = deckId;
     }
+    if (state.isMobileNav && state.isSidebarOpen) {
+        closeSidebar({ restoreFocus: false });
+    }
     state.view = 'study';
 
     render();
@@ -712,6 +741,76 @@ function handleStudyExit(event) {
 function initializeTheme() {
     state.themePreference = getThemePreference();
     applyThemePreference(state.themePreference);
+}
+
+function handleMobileNavChange(event) {
+    syncResponsiveNavMode(event.matches);
+    render();
+}
+
+function syncResponsiveNavMode(nextIsMobile = null) {
+    const isMobile = typeof nextIsMobile === 'boolean'
+        ? nextIsMobile
+        : window.matchMedia('(max-width: 767px)').matches;
+
+    state.isMobileNav = isMobile;
+
+    if (!isMobile) {
+        state.isSidebarOpen = false;
+        sidebarReturnFocusEl = null;
+    }
+}
+
+function openSidebar(triggerEl = null) {
+    if (!state.isMobileNav) {
+        return;
+    }
+
+    if (triggerEl instanceof HTMLElement) {
+        sidebarReturnFocusEl = triggerEl;
+    }
+
+    state.isSidebarOpen = true;
+    render();
+}
+
+function closeSidebar(options = {}) {
+    if (!state.isSidebarOpen) {
+        return;
+    }
+
+    const shouldRestoreFocus = options.restoreFocus !== false;
+    state.isSidebarOpen = false;
+    render();
+
+    const returnEl = sidebarReturnFocusEl;
+    if (shouldRestoreFocus && returnEl instanceof HTMLElement && returnEl.isConnected) {
+        setTimeout(() => {
+            returnEl.focus();
+        }, 0);
+    }
+
+    if (!shouldRestoreFocus) {
+        sidebarReturnFocusEl = null;
+    }
+}
+
+function toggleSidebar(triggerEl = null) {
+    if (state.isSidebarOpen) {
+        closeSidebar();
+        return;
+    }
+
+    openSidebar(triggerEl);
+}
+
+function applySidebarStateToDom() {
+    const body = document.body;
+    if (!body) {
+        return;
+    }
+
+    body.classList.toggle('has-mobile-sidebar-open', state.isMobileNav && state.isSidebarOpen);
 }
 
 function handleSystemThemeChange() {
@@ -783,6 +882,8 @@ function render() {
             // Compute derived data: decks
             const homeData = {
                 decks: state.decks,
+                isSidebarOpen: state.isSidebarOpen,
+                isMobileNav: state.isMobileNav,
                 themePreference: state.themePreference,
                 effectiveTheme: state.effectiveTheme,
                 modal: getRenderModal(),
@@ -802,6 +903,8 @@ function render() {
                 cards: filteredCards,
                 decks: state.decks,
                 searchQuery: state.searchQuery,
+                isSidebarOpen: state.isSidebarOpen,
+                isMobileNav: state.isMobileNav,
                 themePreference: state.themePreference,
                 effectiveTheme: state.effectiveTheme,
                 modal: getRenderModal(),
@@ -833,6 +936,7 @@ function render() {
         }
     }
 
+    applySidebarStateToDom();
     lastRenderedView = state.view;
 }
 

@@ -136,6 +136,14 @@
 	animation: cardItemIn var(--duration-medium) var(--ease-soft) both;
 }
 
+.app-sidebar,
+.sidebar-backdrop {
+	transition:
+		transform var(--duration-medium) var(--ease-soft),
+		opacity var(--duration-medium) var(--ease-soft),
+		visibility var(--duration-medium) var(--ease-soft);
+}
+
 :root.is-theme-transitioning #app,
 :root.is-theme-transitioning #app * {
 	transition-property: background-color, color, border-color, box-shadow, fill, stroke;
@@ -220,6 +228,8 @@
 	.card-flip-inner,
 	.hover-lift,
 	.press-down,
+	.app-sidebar,
+	.sidebar-backdrop,
 	.theme-toggle-icon,
 	.theme-toggle-icon-stack,
 	:root.is-theme-transitioning #app,

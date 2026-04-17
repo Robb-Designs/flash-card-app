@@ -95,6 +95,25 @@ function renderThemeToggleButton(data) {
 	`;
 }
 
+function renderSidebarToggleButton(data) {
+	const isSidebarOpen = Boolean(data?.isSidebarOpen);
+	return `
+		<button class="btn btn-ghost btn-icon mobile-nav-toggle" type="button" data-action="toggle-sidebar" aria-label="Toggle deck sidebar" aria-controls="app-sidebar" aria-expanded="${String(isSidebarOpen)}">
+			<i class="fa-solid fa-bars" aria-hidden="true"></i>
+			<span class="sr-only">Toggle deck sidebar</span>
+		</button>
+	`;
+}
+
+function renderSidebarCloseButton() {
+	return `
+		<button class="btn btn-ghost btn-icon sidebar-close-btn" type="button" data-action="close-sidebar" aria-label="Close deck sidebar">
+			<i class="fa-solid fa-xmark" aria-hidden="true"></i>
+			<span class="sr-only">Close deck sidebar</span>
+		</button>
+	`;
+}
+
 /**
  * Builds the full home view markup.
  * @param {Object} data - View data, usually including a decks array.
@@ -103,15 +122,28 @@ function renderThemeToggleButton(data) {
 function renderHomeShell(data) {
     const decks = Array.isArray(data?.decks) ? data.decks : [];
     const entryClass = data?.animateEntry ? 'entry-animate' : '';
+    const sidebarClass = data?.isSidebarOpen ? 'is-sidebar-open' : 'is-sidebar-closed';
+    const sidebarAriaHidden = data?.isMobileNav ? String(!data?.isSidebarOpen) : 'false';
+    const backdropHidden = data?.isMobileNav ? String(!data?.isSidebarOpen) : 'true';
 
     return `
-		<div class="app-layout ${entryClass}">
-			<aside class="app-sidebar" aria-label="Deck sidebar">
+		<div class="app-layout ${sidebarClass} ${entryClass}">
+			<header class="mobile-topbar" aria-label="Mobile navigation">
+				<div class="mobile-topbar-left">
+					${renderSidebarToggleButton(data)}
+				</div>
+				<h1 class="mobile-topbar-title">Flashcards</h1>
+				<div class="mobile-topbar-right">
+					${renderThemeToggleButton(data)}
+				</div>
+			</header>
+			<aside id="app-sidebar" class="app-sidebar" aria-label="Deck sidebar" aria-hidden="${sidebarAriaHidden}">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
 						<div class="sidebar-header-row">
 							<h1 class="app-title">Flashcards</h1>
 							<div class="sidebar-header-actions" aria-label="Display settings">
+								${renderSidebarCloseButton()}
 								${renderThemeToggleButton(data)}
 							</div>
 						</div>
@@ -120,6 +152,7 @@ function renderHomeShell(data) {
 					${renderDeckList(decks)}
 				</div>
 			</aside>
+			<div class="sidebar-backdrop" data-action="close-sidebar" aria-hidden="${backdropHidden}"></div>
 			<main class="app-main" aria-label="Home view">
 				<div class="app-main-inner">
 					<section class="view-body">
@@ -145,16 +178,29 @@ function renderDeckShell(data) {
     const deckId = deck?.id ?? '';
     const deckName = deck?.name ?? 'Untitled Deck';
 	const resultLabel = `${cards.length} card${cards.length === 1 ? '' : 's'} shown`;
-		const entryClass = data?.animateEntry ? 'entry-animate' : '';
+	const entryClass = data?.animateEntry ? 'entry-animate' : '';
+	const sidebarClass = data?.isSidebarOpen ? 'is-sidebar-open' : 'is-sidebar-closed';
+	const sidebarAriaHidden = data?.isMobileNav ? String(!data?.isSidebarOpen) : 'false';
+	const backdropHidden = data?.isMobileNav ? String(!data?.isSidebarOpen) : 'true';
 
     return `
-		<div class="app-layout ${entryClass}">
-			<aside class="app-sidebar" aria-label="Deck sidebar">
+		<div class="app-layout ${sidebarClass} ${entryClass}">
+			<header class="mobile-topbar" aria-label="Mobile navigation">
+				<div class="mobile-topbar-left">
+					${renderSidebarToggleButton(data)}
+				</div>
+				<h1 class="mobile-topbar-title">${escapeHtml(deckName)}</h1>
+				<div class="mobile-topbar-right">
+					${renderThemeToggleButton(data)}
+				</div>
+			</header>
+			<aside id="app-sidebar" class="app-sidebar" aria-label="Deck sidebar" aria-hidden="${sidebarAriaHidden}">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
 						<div class="sidebar-header-row">
 							<h1 class="app-title">Flashcards</h1>
 							<div class="sidebar-header-actions" aria-label="Display settings">
+								${renderSidebarCloseButton()}
 								${renderThemeToggleButton(data)}
 							</div>
 						</div>
@@ -163,6 +209,7 @@ function renderDeckShell(data) {
 					${renderDeckList(Array.isArray(data?.decks) ? data.decks : [])}
 				</div>
 			</aside>
+			<div class="sidebar-backdrop" data-action="close-sidebar" aria-hidden="${backdropHidden}"></div>
 			<main class="app-main" aria-label="Deck view">
 				<div class="app-main-inner">
 					<header class="view-header">

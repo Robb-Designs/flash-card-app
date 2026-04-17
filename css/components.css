@@ -127,6 +127,12 @@
 	pointer-events: none;
 }
 
+.mobile-nav-toggle,
+.sidebar-close-btn {
+	min-width: 44px;
+	min-height: 44px;
+}
+
 .modal-backdrop {
 	position: fixed;
 	inset: 0;
@@ -365,6 +371,11 @@
 }
 
 @media (max-width: 767px) {
+	.deck-header-actions .btn,
+	.study-controls .btn {
+		width: 100%;
+	}
+
 	.card-list-head {
 		flex-direction: column;
 	}
