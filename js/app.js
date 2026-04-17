@@ -40,6 +40,7 @@ const state = {
 let toastCounter = 0;
 const toastTimerMap = new Map();
 let modalReturnFocusEl = null;
+let lastRenderedView = null;
 
 // Initialization
 function init() {
@@ -692,13 +693,16 @@ function handleStudyExit(event) {
 
 // Render function
 function render() {
+    const isViewEntry = lastRenderedView !== state.view;
+
     switch (state.view) {
         case 'home':
             // Compute derived data: decks
             const homeData = {
                 decks: state.decks,
                 modal: getRenderModal(),
-                toast: state.toasts
+                toast: state.toasts,
+                animateEntry: isViewEntry
             };
             renderHomeView(homeData);
             break;
@@ -714,7 +718,8 @@ function render() {
                 decks: state.decks,
                 searchQuery: state.searchQuery,
                 modal: getRenderModal(),
-                toast: state.toasts
+                toast: state.toasts,
+                animateEntry: isViewEntry
             };
             renderDeckView(deckData);
             break;
@@ -731,12 +736,15 @@ function render() {
                 currentIndex: getCurrentIndex(),
                 totalCards: getTotalCards(),
                 modal: getRenderModal(),
-                toast: state.toasts
+                toast: state.toasts,
+                animateEntry: isViewEntry
             });
 
             break;
         }
     }
+
+    lastRenderedView = state.view;
 }
 
 // Export init for external call

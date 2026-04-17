@@ -128,11 +128,11 @@
 	animation: toastIn 300ms var(--ease-soft) both;
 }
 
-.deck-list {
+.entry-animate .deck-list {
 	animation: fadeSlideIn var(--duration-medium) var(--ease-soft) both;
 }
 
-.view-body .card {
+.entry-animate .view-body .card {
 	animation: cardItemIn var(--duration-medium) var(--ease-soft) both;
 }
 

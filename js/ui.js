@@ -86,9 +86,10 @@ function renderEmptyState(message) {
  */
 function renderHomeShell(data) {
     const decks = Array.isArray(data?.decks) ? data.decks : [];
+    const entryClass = data?.animateEntry ? 'entry-animate' : '';
 
     return `
-		<div class="app-layout">
+		<div class="app-layout ${entryClass}">
 			<aside class="app-sidebar" aria-label="Deck sidebar">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
@@ -123,9 +124,10 @@ function renderDeckShell(data) {
     const deckId = deck?.id ?? '';
     const deckName = deck?.name ?? 'Untitled Deck';
 	const resultLabel = `${cards.length} card${cards.length === 1 ? '' : 's'} shown`;
+		const entryClass = data?.animateEntry ? 'entry-animate' : '';
 
     return `
-		<div class="app-layout">
+		<div class="app-layout ${entryClass}">
 			<aside class="app-sidebar" aria-label="Deck sidebar">
 				<div class="app-sidebar-inner">
 					<div class="sidebar-header">
@@ -195,9 +197,10 @@ function renderStudyShell(data) {
 	const studyAriaLabel = isFlipped
 		? `Card back: ${backText || 'No answer text'}. Press Space or Enter to flip back.`
 		: `Card front: ${frontText || 'No prompt text'}. Press Space or Enter to reveal answer.`;
+	const studyEntryClass = data?.animateEntry ? 'study-enter entry-animate' : '';
 
     return `
-		<section class="view-study study-enter" aria-label="Study session">
+		<section class="view-study ${studyEntryClass}" aria-label="Study session">
 			<header class="study-header">
 				<button class="btn btn-ghost hover-lift press-down study-header-left" type="button" data-action="exit-study" data-id="${escapeHtml(deckId)}">Exit</button>
 				<div class="study-header-center">
@@ -483,7 +486,7 @@ export function renderCardList(cards, deckName = 'Selected deck') {
  * @returns {void} Does not return a value.
  */
 export function renderHomeView(data = {}) {
-	renderRoot(`<div class="fade-in">${renderHomeShell(data)}</div>`, data.modal, data.toast);
+	renderRoot(renderHomeShell(data), data.modal, data.toast);
 }
 
 /**
@@ -492,7 +495,7 @@ export function renderHomeView(data = {}) {
  * @returns {void} Does not return a value.
  */
 export function renderDeckView(data = {}) {
-	renderRoot(`<div class="fade-in">${renderDeckShell(data)}</div>`, data.modal, data.toast);
+	renderRoot(renderDeckShell(data), data.modal, data.toast);
 }
 
 /**
