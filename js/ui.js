@@ -258,6 +258,23 @@ function renderModalMarkup(config) {
     const confirmAction = config.confirmAction ?? 'modal-confirm';
     const cancelAction = config.cancelAction ?? 'modal-cancel';
     const modalId = config.id ?? '';
+    const input = config.input ?? null;
+
+    const inputMarkup = input ? `
+					<label class="modal-field" for="${escapeHtml(input.id ?? 'modal-input')}">
+						<span class="modal-field-label">${escapeHtml(input.label ?? 'Value')}</span>
+						<input
+							id="${escapeHtml(input.id ?? 'modal-input')}"
+							class="input"
+							name="${escapeHtml(input.name ?? 'modal-input')}"
+							type="text"
+							value="${escapeHtml(input.value ?? '')}"
+							placeholder="${escapeHtml(input.placeholder ?? '')}"
+							data-action="${escapeHtml(input.action ?? 'modal-input')}"
+							autocomplete="off"
+						>
+					</label>
+				` : '';
 
     return `
 		<div class="modal-backdrop" data-modal-open="true">
@@ -268,6 +285,7 @@ function renderModalMarkup(config) {
 				</div>
 				<div class="modal-body">
 					<p class="modal-message">${escapeHtml(message)}</p>
+					${inputMarkup}
 				</div>
 				<div class="modal-actions">
 					<button class="btn btn-secondary hover-lift press-down" type="button" data-action="${escapeHtml(cancelAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(cancelLabel)}</button>

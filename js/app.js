@@ -15,7 +15,7 @@
  * - Central render cycle
  */
 
-alert('Hello from app.js!');
+
 // Imports
 import { init as storeInit, getLastActiveDeck } from './store.js';
 import { loadDecks, createDeck, updateDeck, deleteDeck, selectDeck } from './decks.js';
@@ -30,7 +30,9 @@ const state = {
     view: 'home', // 'home' | 'deck' | 'study'
     activeDeckId: null,
     decks: [],
-    searchQuery: ''
+    searchQuery: '',
+    modal: null,
+    modalInputValue: ''
 };
 
 // Initialization
@@ -101,12 +103,32 @@ function handleDocumentClick(event) {
             break;
 
         case 'create-deck': {
-            const name = window.prompt('Deck name?');
-            if (name && name.trim()) {
-                createDeck(name.trim());
-            }
+            state.modalInputValue = '';
+            state.modal = {
+                title: 'New Deck',
+                message: 'Create a new deck.',
+                confirmLabel: 'Create',
+                cancelLabel: 'Cancel',
+                confirmAction: 'confirm-create-deck',
+                cancelAction: 'modal-cancel',
+                input: {
+                    id: 'modal-new-deck-name',
+                    name: 'deck-name',
+                    label: 'Deck name',
+                    placeholder: 'Enter deck name',
+                    action: 'modal-input',
+                    value: ''
+                }
+            };
+            render();
             break;
         }
+
+        case 'hide-modal':
+        case 'modal-cancel':
+            closeModal();
+            render();
+            break;
 
         case 'delete-deck':
             if (id) {
@@ -119,10 +141,86 @@ function handleDocumentClick(event) {
 
             const existingDeck = state.decks.find((deck) => deck.id === id);
             const currentName = existingDeck?.name ?? '';
-            const name = window.prompt('New deck name?', currentName);
 
-            if (name && name.trim()) {
-                updateDeck(id, name.trim());
+            state.modalInputValue = currentName;
+            state.modal = {
+                id,
+                title: 'Edit Deck',
+                message: 'Update the deck name.',
+                confirmLabel: 'Save',
+                cancelLabel: 'Cancel',
+                confirmAction: 'confirm-edit-deck',
+                cancelAction: 'modal-cancel',
+                input: {
+                    id: 'modal-deck-name',
+                    name: 'deck-name',
+                    label: 'Deck name',
+                    placeholder: 'Enter deck name',
+                    action: 'modal-input',
+                    value: currentName
+                }
+            };
+            render();
+            break;
+        }
+
+        case 'confirm-edit-deck': {
+            const deckId = id || state.modal?.id;
+            if (!deckId) break;
+
+            const nextName = state.modalInputValue.trim();
+            if (!nextName) {
+                state.modal = {
+                    ...(state.modal || {}),
+                    id: deckId,
+                    message: 'Deck name must be 1-60 characters.'
+                };
+                render();
+                break;
+            }
+
+            const modalSnapshot = state.modal;
+            const inputSnapshot = state.modalInputValue;
+
+            try {
+                closeModal();
+                updateDeck(deckId, nextName);
+            } catch (error) {
+                state.modal = {
+                    ...(modalSnapshot || {}),
+                    id: deckId,
+                    message: error instanceof Error ? error.message : 'Unable to update deck.'
+                };
+                state.modalInputValue = inputSnapshot;
+                render();
+            }
+            break;
+        }
+
+        case 'confirm-create-deck': {
+            const nextName = state.modalInputValue.trim();
+            if (!nextName) {
+                state.modal = {
+                    ...(state.modal || {}),
+                    message: 'Deck name must be 1-60 characters.'
+                };
+                render();
+                break;
+            }
+
+            const modalSnapshot = state.modal;
+            const inputSnapshot = state.modalInputValue;
+
+            try {
+                closeModal();
+                createDeck(nextName);
+            } catch (error) {
+                state.modal = {
+                    ...(modalSnapshot || {}),
+                    message: error instanceof Error ? error.message : 'Unable to create deck.'
+                };
+                state.modalInputValue = inputSnapshot;
+                render();
             }
             break;
         }
@@ -184,6 +282,11 @@ function handleDocumentInput(event) {
     if (action === 'search-cards') {
         state.searchQuery = actionEl.value ?? '';
         render();
+        return;
+    }
+
+    if (action === 'modal-input') {
+        state.modalInputValue = actionEl.value ?? '';
     }
 }
 
@@ -225,6 +328,29 @@ function handleDeckUpdated(event) {
     }
 
     render();
+}
+
+function closeModal() {
+    state.modal = null;
+    state.modalInputValue = '';
+}
+
+function getRenderModal() {
+    if (!state.modal) {
+        return null;
+    }
+
+    if (!state.modal.input) {
+        return state.modal;
+    }
+
+    return {
+        ...state.modal,
+        input: {
+            ...state.modal.input,
+            value: state.modalInputValue
+        }
+    };
 }
 
 function handleDeckDeleted(event) {
@@ -292,7 +418,8 @@ function render() {
         case 'home':
             // Compute derived data: decks
             const homeData = {
-                decks: state.decks
+                decks: state.decks,
+                modal: getRenderModal()
             };
             renderHomeView(homeData);
             break;
@@ -306,7 +433,8 @@ function render() {
                 deck: activeDeck,
                 cards: filteredCards,
                 decks: state.decks,
-                searchQuery: state.searchQuery
+                searchQuery: state.searchQuery,
+                modal: getRenderModal()
             };
             renderDeckView(deckData);
             break;
@@ -319,7 +447,8 @@ function render() {
                 currentCard,
                 isFlipped: getIsFlipped(), // 🔥 THIS is the fix
                 currentIndex: getCurrentIndex(),
-                totalCards: getTotalCards()
+                totalCards: getTotalCards(),
+                modal: getRenderModal()
             });
 
             break;
