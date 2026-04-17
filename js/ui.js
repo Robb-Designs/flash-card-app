@@ -186,12 +186,12 @@ function renderStudyShell(data) {
     const counterText = totalCards > 0 ? `Card ${currentIndex + 1} of ${totalCards}` : 'No cards to study';
 
     return `
-		<section class="study-overlay" aria-label="Study session">
+		<section class="view-study study-enter" aria-label="Study session">
 			<header class="study-header">
-				<button class="btn btn-ghost" type="button" data-action="exit-study" data-id="${escapeHtml(deckId)}">Exit</button>
+				<button class="btn btn-ghost hover-lift press-down" type="button" data-action="exit-study" data-id="${escapeHtml(deckId)}">Exit</button>
 				<p class="study-counter">${escapeHtml(counterText)}</p>
 				<button
-					class="btn btn-secondary"
+					class="btn btn-secondary hover-lift press-down"
 					type="button"
 					data-action="toggle-shuffle"
 					data-id="${escapeHtml(deckId)}"
@@ -200,11 +200,11 @@ function renderStudyShell(data) {
 					Shuffle
 				</button>
 			</header>
-			<main class="study-main">
+			<main class="study-main study-container">
 				<div class="study-progress" aria-hidden="true">
 					<div class="study-progress-fill"></div>
 				</div>
-				<div class="card-flip ${isFlipped ? 'is-flipped' : ''}" data-action="flip-card" data-id="${escapeHtml(deckId)}">
+				<div class="card-flip hover-lift press-down ${isFlipped ? 'is-flipped' : ''}" data-action="flip-card" data-id="${escapeHtml(deckId)}">
 					<div class="card-flip-inner">
 						<div class="card card-flip-front">
 							<div class="card-front">${escapeHtml(frontText)}</div>
@@ -214,14 +214,30 @@ function renderStudyShell(data) {
 						</div>
 					</div>
 				</div>
-				<nav class="study-nav" aria-label="Study controls">
-					<button class="btn btn-secondary" type="button" data-action="prev-card" data-id="${escapeHtml(deckId)}">Prev</button>
-					<button class="btn btn-ghost" type="button" data-action="restart-study" data-id="${escapeHtml(deckId)}">Restart</button>
-					<button class="btn btn-primary" type="button" data-action="next-card" data-id="${escapeHtml(deckId)}">Next</button>
+				<nav class="study-nav study-controls" aria-label="Study controls">
+					<button class="btn btn-secondary hover-lift press-down" type="button" data-action="prev-card" data-id="${escapeHtml(deckId)}">Prev</button>
+					<button class="btn btn-ghost hover-lift press-down" type="button" data-action="restart-study" data-id="${escapeHtml(deckId)}">Restart</button>
+					<button class="btn btn-primary hover-lift press-down" type="button" data-action="next-card" data-id="${escapeHtml(deckId)}">Next</button>
 				</nav>
 			</main>
 		</section>
 	`;
+}
+
+/**
+ * Updates only the study flip class so the same DOM node can animate.
+ * @param {boolean} isFlipped - Whether the study card should show the back side.
+ * @returns {void} Does not return a value.
+ */
+export function syncStudyFlip(isFlipped) {
+    ensureRoot();
+
+    const flipEl = root.querySelector('.card-flip');
+    if (!flipEl) {
+        return;
+    }
+
+    flipEl.classList.toggle('is-flipped', Boolean(isFlipped));
 }
 
 /**
@@ -248,14 +264,14 @@ function renderModalMarkup(config) {
 			<section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
 				<div class="modal-header">
 					<h2 class="modal-title" id="modal-title">${escapeHtml(title)}</h2>
-					<button class="btn btn-ghost" type="button" data-action="hide-modal">Close</button>
+                    <button class="btn btn-ghost hover-lift press-down" type="button" data-action="hide-modal">Close</button>
 				</div>
 				<div class="modal-body">
 					<p class="modal-message">${escapeHtml(message)}</p>
 				</div>
 				<div class="modal-actions">
-					<button class="btn btn-secondary" type="button" data-action="${escapeHtml(cancelAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(cancelLabel)}</button>
-					<button class="btn btn-primary" type="button" data-action="${escapeHtml(confirmAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(confirmLabel)}</button>
+					<button class="btn btn-secondary hover-lift press-down" type="button" data-action="${escapeHtml(cancelAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(cancelLabel)}</button>
+					<button class="btn btn-primary hover-lift press-down" type="button" data-action="${escapeHtml(confirmAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(confirmLabel)}</button>
 				</div>
 			</section>
 		</div>
@@ -345,7 +361,7 @@ export function renderCardList(cards) {
  * @returns {void} Does not return a value.
  */
 export function renderHomeView(data = {}) {
-    renderRoot(renderHomeShell(data), data.modal, data.toast);
+	renderRoot(`<div class="fade-in">${renderHomeShell(data)}</div>`, data.modal, data.toast);
 }
 
 /**
@@ -354,7 +370,7 @@ export function renderHomeView(data = {}) {
  * @returns {void} Does not return a value.
  */
 export function renderDeckView(data = {}) {
-    renderRoot(renderDeckShell(data), data.modal, data.toast);
+	renderRoot(`<div class="fade-in">${renderDeckShell(data)}</div>`, data.modal, data.toast);
 }
 
 /**

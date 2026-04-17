@@ -22,7 +22,7 @@ import { loadDecks, createDeck, deleteDeck, selectDeck } from './decks.js';
 import { loadCards, createCard, deleteCard } from './cards.js';
 import { startStudy, getCurrentCard, nextCard, prevCard, flipCard, restartStudy, exitStudy, getIsFlipped, getCurrentIndex, getTotalCards } from './study.js';
 import { filterCards } from './search.js';
-import { renderHomeView, renderDeckView, renderStudyView } from './ui.js';
+import { renderHomeView, renderDeckView, renderStudyView, syncStudyFlip } from './ui.js';
 import { initKeyboard } from './keyboard.js';
 
 // Global state
@@ -72,22 +72,15 @@ function registerEventListeners() {
     document.addEventListener('deck:deleted', handleDeckDeleted);
     document.addEventListener('card:created', handleCardCreated);
     document.addEventListener('card:deleted', handleCardDeleted);
-    document.addEventListener('study:flip', handleStudyEvent);
     document.addEventListener('study:start', handleStudyStart);
     document.addEventListener('study:exit', handleStudyExit);
     document.addEventListener('study:next', handleStudyUpdate);
     document.addEventListener('study:prev', handleStudyUpdate);
-    document.addEventListener('study:flip', handleStudyUpdate);
     document.addEventListener('study:shuffle', handleStudyUpdate);
     document.addEventListener('study:complete', handleStudyUpdate);
 }
 
 // UI event handlers
-function handleStudyEvent(event) {
-    const { deckId, isFlipped } = event.detail;
-    render();
-}
-
 function handleDocumentClick(event) {
     const actionEl = event.target.closest('[data-action]');
     if (!actionEl) return;
@@ -97,8 +90,8 @@ function handleDocumentClick(event) {
 
     switch (action) {
         case 'flip-card':
-            console.log('flip triggered'); // 👈 ADD THIS LINE
             flipCard();
+            syncStudyFlip(getIsFlipped());
             break;
         case 'select-deck':
             if (id) {
@@ -153,10 +146,6 @@ function handleDocumentClick(event) {
 
         case 'prev-card':
             prevCard();
-            break;
-
-        case 'flip-card':
-            flipCard();
             break;
 
         case 'restart-study':
