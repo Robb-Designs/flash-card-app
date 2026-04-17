@@ -111,14 +111,83 @@
 	animation: studyEnter var(--duration-medium) var(--ease-standard) both;
 }
 
+.study-header,
+.study-controls {
+	animation: fadeInSlide var(--duration-medium) var(--ease-soft) both;
+}
+
 .study-exit {
 	animation: studyExit var(--duration-medium) var(--ease-soft) both;
+}
+
+.modal {
+	animation: modalIn 250ms var(--ease-standard) both;
+}
+
+.toast {
+	animation: toastIn 300ms var(--ease-soft) both;
+}
+
+.deck-list {
+	animation: fadeSlideIn var(--duration-medium) var(--ease-soft) both;
+}
+
+.view-body .card {
+	animation: cardItemIn var(--duration-medium) var(--ease-soft) both;
+}
+
+@keyframes modalIn {
+	from {
+		opacity: 0;
+		transform: translateY(12px) scale(0.98);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}
+
+@keyframes toastIn {
+	from {
+		opacity: 0;
+		transform: translateX(20px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+@keyframes cardItemIn {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fadeSlideIn {
+	from {
+		opacity: 0;
+		transform: translateX(-8px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
 }
 
 @keyframes studyEnter {
 	from {
 		opacity: 0;
-		transform: translateY(8px);
+		transform: translateY(10px);
 	}
 
 	to {
@@ -135,7 +204,7 @@
 
 	to {
 		opacity: 0;
-		transform: translateY(8px);
+		transform: translateY(10px);
 	}
 }
 
@@ -179,7 +248,9 @@
 	.fade-in,
 	.fade-out,
 	.study-enter,
-	.study-exit {
+	.study-exit,
+	.modal,
+	.toast {
 		animation-duration: 1ms !important;
 	}
 

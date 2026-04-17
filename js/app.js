@@ -32,8 +32,14 @@ const state = {
     decks: [],
     searchQuery: '',
     modal: null,
-    modalInputValue: ''
+    modalInputValue: '',
+    modalFormValues: {},
+    toasts: []
 };
+
+let toastCounter = 0;
+const toastTimerMap = new Map();
+let modalReturnFocusEl = null;
 
 // Initialization
 function init() {
@@ -67,6 +73,7 @@ function registerEventListeners() {
     document.addEventListener('click', handleDocumentClick);
     document.addEventListener('input', handleDocumentInput);
     document.addEventListener('submit', handleDocumentSubmit);
+    document.addEventListener('keydown', handleDocumentKeydown);
 
     // CustomEvents
     document.addEventListener('deck:selected', handleDeckSelected);
@@ -95,6 +102,7 @@ function handleDocumentClick(event) {
         case 'flip-card':
             flipCard();
             syncStudyFlip(getIsFlipped());
+            syncStudyAria(getIsFlipped());
             break;
         case 'select-deck':
             if (id) {
@@ -103,8 +111,7 @@ function handleDocumentClick(event) {
             break;
 
         case 'create-deck': {
-            state.modalInputValue = '';
-            state.modal = {
+            openModal({
                 title: 'New Deck',
                 message: 'Create a new deck.',
                 confirmLabel: 'Create',
@@ -119,8 +126,7 @@ function handleDocumentClick(event) {
                     action: 'modal-input',
                     value: ''
                 }
-            };
-            render();
+            }, '');
             break;
         }
 
@@ -142,8 +148,7 @@ function handleDocumentClick(event) {
             const existingDeck = state.decks.find((deck) => deck.id === id);
             const currentName = existingDeck?.name ?? '';
 
-            state.modalInputValue = currentName;
-            state.modal = {
+            openModal({
                 id,
                 title: 'Edit Deck',
                 message: 'Update the deck name.',
@@ -159,8 +164,7 @@ function handleDocumentClick(event) {
                     action: 'modal-input',
                     value: currentName
                 }
-            };
-            render();
+            }, currentName);
             break;
         }
 
@@ -228,11 +232,74 @@ function handleDocumentClick(event) {
         case 'create-card': {
             if (!state.activeDeckId) break;
 
-            const front = window.prompt('Front text?');
-            const back = window.prompt('Back text?');
+            openModal({
+                id: state.activeDeckId,
+                title: 'New Card',
+                message: 'Add the front and back text for this card.',
+                confirmLabel: 'Create',
+                cancelLabel: 'Cancel',
+                confirmAction: 'confirm-create-card',
+                cancelAction: 'modal-cancel',
+                fields: [
+                    {
+                        id: 'modal-card-front',
+                        name: 'front',
+                        label: 'Front',
+                        placeholder: 'Enter front text',
+                        action: 'modal-field-input',
+                        control: 'textarea',
+                        rows: 4,
+                        value: ''
+                    },
+                    {
+                        id: 'modal-card-back',
+                        name: 'back',
+                        label: 'Back',
+                        placeholder: 'Enter back text',
+                        action: 'modal-field-input',
+                        control: 'textarea',
+                        rows: 4,
+                        value: ''
+                    }
+                ]
+            }, {
+                front: '',
+                back: ''
+            });
+            break;
+        }
 
-            if (front && back) {
-                createCard(state.activeDeckId, front.trim(), back.trim());
+        case 'confirm-create-card': {
+            const deckId = id || state.modal?.id || state.activeDeckId;
+            if (!deckId) break;
+
+            const front = getModalFieldValue('front').trim();
+            const back = getModalFieldValue('back').trim();
+
+            if (!front || !back) {
+                state.modal = {
+                    ...(state.modal || {}),
+                    id: deckId,
+                    message: 'Card front and back must be 1-500 characters.'
+                };
+                render();
+                break;
+            }
+
+            const modalSnapshot = state.modal;
+            const formSnapshot = { ...state.modalFormValues };
+
+            try {
+                closeModal();
+                createCard(deckId, front, back);
+            } catch (error) {
+                state.modal = {
+                    ...(modalSnapshot || {}),
+                    id: deckId,
+                    message: error instanceof Error ? error.message : 'Unable to create card.'
+                };
+                state.modalFormValues = formSnapshot;
+                render();
             }
             break;
         }
@@ -287,11 +354,87 @@ function handleDocumentInput(event) {
 
     if (action === 'modal-input') {
         state.modalInputValue = actionEl.value ?? '';
+        return;
+    }
+
+    if (action === 'modal-field-input') {
+        const fieldName = actionEl.dataset.field;
+        if (!fieldName) {
+            return;
+        }
+
+        state.modalFormValues = {
+            ...state.modalFormValues,
+            [fieldName]: actionEl.value ?? ''
+        };
     }
 }
 
 function handleDocumentSubmit(event) {
     event.preventDefault();
+}
+
+function handleDocumentKeydown(event) {
+    if (!state.modal) {
+        return;
+    }
+
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeModal();
+        render();
+        return;
+    }
+
+    if (event.key !== 'Tab') {
+        if (event.key === 'Enter' && state.modal?.confirmAction) {
+            const target = event.target;
+            if (
+                target instanceof HTMLElement &&
+                target.closest('.modal') &&
+                (target.matches('input') || target.matches('select'))
+            ) {
+                event.preventDefault();
+                const confirmBtn = document.querySelector(`.modal [data-action="${state.modal.confirmAction}"]`);
+                if (confirmBtn instanceof HTMLElement) {
+                    confirmBtn.click();
+                }
+            }
+        }
+        return;
+    }
+
+    const focusable = getModalFocusableElements();
+    if (focusable.length === 0) {
+        return;
+    }
+
+    const modal = document.querySelector('.modal');
+    const target = event.target;
+    if (modal instanceof HTMLElement && target instanceof Node && !modal.contains(target)) {
+        event.preventDefault();
+        if (event.shiftKey) {
+            focusable[focusable.length - 1].focus();
+            return;
+        }
+
+        focusable[0].focus();
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+    }
+
+    if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+    }
 }
 
 // CustomEvent handlers
@@ -316,6 +459,8 @@ function handleDeckCreated(event) {
         state.searchQuery = '';
     }
 
+    showToast('Deck created.', 'success');
+
     render();
 }
 
@@ -327,12 +472,128 @@ function handleDeckUpdated(event) {
         state.activeDeckId = updatedDeckId;
     }
 
+    showToast('Deck updated.', 'success');
+
     render();
 }
 
 function closeModal() {
     state.modal = null;
     state.modalInputValue = '';
+    state.modalFormValues = {};
+
+    const returnEl = modalReturnFocusEl;
+    modalReturnFocusEl = null;
+
+    if (returnEl && returnEl.isConnected) {
+        setTimeout(() => {
+            returnEl.focus();
+        }, 0);
+    }
+}
+
+function openModal(config, initialValue = '') {
+    modalReturnFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (typeof initialValue === 'string') {
+        state.modalInputValue = initialValue;
+        state.modalFormValues = {};
+    } else {
+        state.modalInputValue = '';
+        state.modalFormValues = initialValue && typeof initialValue === 'object' ? { ...initialValue } : {};
+    }
+    state.modal = config;
+    render();
+    focusModalFirstElement();
+}
+
+function getModalFocusableElements() {
+    const modal = document.querySelector('.modal');
+    if (!modal) {
+        return [];
+    }
+
+    const selector = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    return Array.from(modal.querySelectorAll(selector)).filter((el) => el instanceof HTMLElement && el.offsetParent !== null);
+}
+
+function focusModalFirstElement() {
+    queueMicrotask(() => {
+        const focusable = getModalFocusableElements();
+        if (focusable.length > 0) {
+            focusable[0].focus();
+            return;
+        }
+
+        const modal = document.querySelector('.modal');
+        if (modal instanceof HTMLElement) {
+            modal.focus();
+        }
+    });
+}
+
+function showToast(message, type = 'info') {
+    if (!message) {
+        return;
+    }
+
+    toastCounter += 1;
+    const id = `toast-${toastCounter}`;
+
+    state.toasts = [...state.toasts, { id, message, type }];
+
+    const timerId = setTimeout(() => {
+        dismissToast(id);
+    }, 4000);
+
+    toastTimerMap.set(id, timerId);
+}
+
+function dismissToast(id) {
+    state.toasts = state.toasts.filter((toast) => toast.id !== id);
+
+    const timerId = toastTimerMap.get(id);
+    if (timerId) {
+        clearTimeout(timerId);
+        toastTimerMap.delete(id);
+    }
+
+    render();
+}
+
+function syncStudyAria(isFlipped) {
+    const flipEl = document.querySelector('.card-flip');
+    if (!(flipEl instanceof HTMLElement)) {
+        return;
+    }
+
+    const frontText = flipEl.querySelector('.card-front')?.textContent?.trim() ?? '';
+    const backText = flipEl.querySelector('.card-back')?.textContent?.trim() ?? '';
+    const frontFace = flipEl.querySelector('.card-flip-front');
+    const backFace = flipEl.querySelector('.card-flip-back');
+    const announcer = document.getElementById('study-announcer');
+
+    const label = isFlipped
+        ? `Card back: ${backText || 'No answer text'}. Press Space or Enter to flip back.`
+        : `Card front: ${frontText || 'No prompt text'}. Press Space or Enter to reveal answer.`;
+
+    flipEl.setAttribute('aria-pressed', isFlipped ? 'true' : 'false');
+    flipEl.setAttribute('aria-label', label);
+
+    if (frontFace instanceof HTMLElement) {
+        frontFace.setAttribute('aria-hidden', isFlipped ? 'true' : 'false');
+    }
+
+    if (backFace instanceof HTMLElement) {
+        backFace.setAttribute('aria-hidden', isFlipped ? 'false' : 'true');
+    }
+
+    if (announcer instanceof HTMLElement && isFlipped) {
+        announcer.textContent = `Card flipped. Answer: ${backText || 'No answer text'}`;
+    }
+}
+
+function getModalFieldValue(fieldName) {
+    return typeof state.modalFormValues[fieldName] === 'string' ? state.modalFormValues[fieldName] : '';
 }
 
 function getRenderModal() {
@@ -341,7 +602,19 @@ function getRenderModal() {
     }
 
     if (!state.modal.input) {
-        return state.modal;
+        if (!Array.isArray(state.modal.fields)) {
+            return state.modal;
+        }
+
+        return {
+            ...state.modal,
+            fields: state.modal.fields.map((field) => ({
+                ...field,
+                value: typeof state.modalFormValues[field.name] === 'string'
+                    ? state.modalFormValues[field.name]
+                    : (field.value ?? '')
+            }))
+        };
     }
 
     return {
@@ -367,6 +640,8 @@ function handleDeckDeleted(event) {
         state.view = 'home';
     }
 
+    showToast('Deck deleted.', 'warning');
+
     render();
 }
 
@@ -379,12 +654,15 @@ function handleCardCreated(event) {
     }
     state.decks = loadDecks();
 
+    showToast('Card created.', 'success');
+
     render();
 }
 
 function handleCardDeleted(event) {
     void event;
     state.decks = loadDecks();
+    showToast('Card deleted.', 'warning');
     render();
 }
 
@@ -419,7 +697,8 @@ function render() {
             // Compute derived data: decks
             const homeData = {
                 decks: state.decks,
-                modal: getRenderModal()
+                modal: getRenderModal(),
+                toast: state.toasts
             };
             renderHomeView(homeData);
             break;
@@ -434,21 +713,25 @@ function render() {
                 cards: filteredCards,
                 decks: state.decks,
                 searchQuery: state.searchQuery,
-                modal: getRenderModal()
+                modal: getRenderModal(),
+                toast: state.toasts
             };
             renderDeckView(deckData);
             break;
 
         case 'study': {
             const currentCard = getCurrentCard();
+            const activeDeck = state.decks.find((deck) => deck.id === state.activeDeckId);
 
             renderStudyView({
                 deckId: state.activeDeckId,
+                deckName: activeDeck?.name ?? 'Study Session',
                 currentCard,
                 isFlipped: getIsFlipped(), // 🔥 THIS is the fix
                 currentIndex: getCurrentIndex(),
                 totalCards: getTotalCards(),
-                modal: getRenderModal()
+                modal: getRenderModal(),
+                toast: state.toasts
             });
 
             break;

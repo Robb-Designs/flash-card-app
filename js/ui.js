@@ -56,7 +56,9 @@ function renderRoot(viewMarkup, modalConfig, toastMessage) {
 
     // Render the full screen in one pass so old markup does not hang around.
     root.innerHTML = `
-		${viewMarkup}
+		<div class="app-root" role="application" aria-label="Flashcards Study App">
+			${viewMarkup}
+		</div>
 		${renderModalMarkup(modalConfig)}
 		${renderToastMarkup(toastMessage)}
 	`;
@@ -120,6 +122,7 @@ function renderDeckShell(data) {
     const cards = Array.isArray(data?.cards) ? data.cards : [];
     const deckId = deck?.id ?? '';
     const deckName = deck?.name ?? 'Untitled Deck';
+	const resultLabel = `${cards.length} card${cards.length === 1 ? '' : 's'} shown`;
 
     return `
 		<div class="app-layout">
@@ -152,15 +155,19 @@ function renderDeckShell(data) {
 								class="input search-input"
 								name="search"
 								type="search"
+								role="searchbox"
+								aria-label="Search cards in deck"
+								aria-controls="card-list"
 								value="${escapeHtml(data?.searchQuery ?? '')}"
 								placeholder="Search front or back text"
 								data-action="search-cards"
 							>
 						</label>
+						<div class="sr-only" id="search-results-count" aria-live="polite" aria-atomic="true">${escapeHtml(resultLabel)}</div>
 						<button class="btn btn-primary hover-lift press-down" type="button" data-action="create-card" data-id="${escapeHtml(deckId)}">Add Card</button>
 					</section>
 					<section class="view-body" aria-label="Cards in deck">
-						${renderCardList(cards)}
+						${renderCardList(cards, deckName)}
 					</section>
 				</div>
 			</main>
@@ -175,6 +182,7 @@ function renderDeckShell(data) {
  */
 function renderStudyShell(data) {
     const deckId = data?.deckId ?? '';
+	const deckName = data?.deckName ?? 'Study Session';
     const currentCard = data?.currentCard ?? null;
     const currentIndex = Number.isInteger(data?.currentIndex) ? data.currentIndex : 0;
     // If totalCards is missing, fall back to 1 when a current card exists.
@@ -184,14 +192,19 @@ function renderStudyShell(data) {
     const frontText = currentCard?.front ?? '';
     const backText = currentCard?.back ?? '';
     const counterText = totalCards > 0 ? `Card ${currentIndex + 1} of ${totalCards}` : 'No cards to study';
+	const studyAriaLabel = isFlipped
+		? `Card back: ${backText || 'No answer text'}. Press Space or Enter to flip back.`
+		: `Card front: ${frontText || 'No prompt text'}. Press Space or Enter to reveal answer.`;
 
     return `
 		<section class="view-study study-enter" aria-label="Study session">
 			<header class="study-header">
-				<button class="btn btn-ghost hover-lift press-down" type="button" data-action="exit-study" data-id="${escapeHtml(deckId)}">Exit</button>
-				<p class="study-counter">${escapeHtml(counterText)}</p>
+				<button class="btn btn-ghost hover-lift press-down study-header-left" type="button" data-action="exit-study" data-id="${escapeHtml(deckId)}">Exit</button>
+				<div class="study-header-center">
+					<h2 class="study-title">${escapeHtml(deckName)}</h2>
+				</div>
 				<button
-					class="btn btn-secondary hover-lift press-down"
+					class="btn btn-secondary hover-lift press-down study-header-right"
 					type="button"
 					data-action="toggle-shuffle"
 					data-id="${escapeHtml(deckId)}"
@@ -204,18 +217,20 @@ function renderStudyShell(data) {
 				<div class="study-progress" aria-hidden="true">
 					<div class="study-progress-fill"></div>
 				</div>
-				<div class="card-flip hover-lift press-down ${isFlipped ? 'is-flipped' : ''}" data-action="flip-card" data-id="${escapeHtml(deckId)}">
+				<div class="card-flip hover-lift press-down ${isFlipped ? 'is-flipped' : ''}" role="button" tabindex="0" data-action="flip-card" data-id="${escapeHtml(deckId)}" aria-pressed="${isFlipped ? 'true' : 'false'}" aria-label="${escapeHtml(studyAriaLabel)}">
 					<div class="card-flip-inner">
-						<div class="card card-flip-front">
+						<div class="card card-flip-front" aria-hidden="${isFlipped ? 'true' : 'false'}">
 							<div class="card-front">${escapeHtml(frontText)}</div>
 						</div>
-						<div class="card card-flip-back">
+						<div class="card card-flip-back" aria-hidden="${isFlipped ? 'false' : 'true'}">
 							<div class="card-back">${escapeHtml(backText)}</div>
 						</div>
 					</div>
 				</div>
+				<div class="sr-only" id="study-announcer" role="status" aria-live="polite" aria-atomic="true">${escapeHtml(counterText)}${isFlipped ? `. Answer: ${backText || 'No answer text'}` : ''}</div>
 				<nav class="study-nav study-controls" aria-label="Study controls">
 					<button class="btn btn-secondary hover-lift press-down" type="button" data-action="prev-card" data-id="${escapeHtml(deckId)}">Prev</button>
+					<p class="study-progress-text">${escapeHtml(counterText)} · Space to flip</p>
 					<button class="btn btn-ghost hover-lift press-down" type="button" data-action="restart-study" data-id="${escapeHtml(deckId)}">Restart</button>
 					<button class="btn btn-primary hover-lift press-down" type="button" data-action="next-card" data-id="${escapeHtml(deckId)}">Next</button>
 				</nav>
@@ -259,6 +274,7 @@ function renderModalMarkup(config) {
     const cancelAction = config.cancelAction ?? 'modal-cancel';
     const modalId = config.id ?? '';
     const input = config.input ?? null;
+	const fields = Array.isArray(config.fields) ? config.fields : [];
 
     const inputMarkup = input ? `
 					<label class="modal-field" for="${escapeHtml(input.id ?? 'modal-input')}">
@@ -276,16 +292,63 @@ function renderModalMarkup(config) {
 					</label>
 				` : '';
 
+    const fieldsMarkup = fields.map((field) => {
+        const fieldId = field.id ?? `modal-field-${field.name ?? 'value'}`;
+        const fieldName = field.name ?? 'value';
+        const fieldLabel = field.label ?? 'Value';
+        const fieldAction = field.action ?? 'modal-field-input';
+        const fieldPlaceholder = field.placeholder ?? '';
+        const fieldValue = field.value ?? '';
+        const fieldControl = field.control === 'textarea' ? 'textarea' : 'input';
+        const rows = Number.isInteger(field.rows) ? field.rows : 4;
+
+        if (fieldControl === 'textarea') {
+            return `
+					<label class="modal-field" for="${escapeHtml(fieldId)}">
+						<span class="modal-field-label">${escapeHtml(fieldLabel)}</span>
+						<textarea
+							id="${escapeHtml(fieldId)}"
+							class="input"
+							name="${escapeHtml(fieldName)}"
+							rows="${rows}"
+							placeholder="${escapeHtml(fieldPlaceholder)}"
+							data-action="${escapeHtml(fieldAction)}"
+							data-field="${escapeHtml(fieldName)}"
+							autocomplete="off"
+						>${escapeHtml(fieldValue)}</textarea>
+					</label>
+				`;
+        }
+
+        return `
+					<label class="modal-field" for="${escapeHtml(fieldId)}">
+						<span class="modal-field-label">${escapeHtml(fieldLabel)}</span>
+						<input
+							id="${escapeHtml(fieldId)}"
+							class="input"
+							name="${escapeHtml(fieldName)}"
+							type="text"
+							value="${escapeHtml(fieldValue)}"
+							placeholder="${escapeHtml(fieldPlaceholder)}"
+							data-action="${escapeHtml(fieldAction)}"
+							data-field="${escapeHtml(fieldName)}"
+							autocomplete="off"
+						>
+					</label>
+				`;
+    }).join('');
+
     return `
 		<div class="modal-backdrop" data-modal-open="true">
-			<section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+			<section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-message" tabindex="-1">
 				<div class="modal-header">
 					<h2 class="modal-title" id="modal-title">${escapeHtml(title)}</h2>
-                    <button class="btn btn-ghost hover-lift press-down" type="button" data-action="hide-modal">Close</button>
+					<button class="btn btn-ghost hover-lift press-down" type="button" data-action="hide-modal" aria-label="Close modal">&times;</button>
 				</div>
 				<div class="modal-body">
-					<p class="modal-message">${escapeHtml(message)}</p>
+					<p class="modal-message" id="modal-message">${escapeHtml(message)}</p>
 					${inputMarkup}
+					${fieldsMarkup}
 				</div>
 				<div class="modal-actions">
 					<button class="btn btn-secondary hover-lift press-down" type="button" data-action="${escapeHtml(cancelAction)}" data-id="${escapeHtml(modalId)}">${escapeHtml(cancelLabel)}</button>
@@ -298,19 +361,47 @@ function renderModalMarkup(config) {
 
 /**
  * Builds the toast markup for a short status message.
- * @param {string} message - The text to display inside the toast.
- * @returns {string} An HTML string for the toast, or an empty string when there is no message.
+ * @param {string|Object|Array} toast - A toast payload or array of toast payloads.
+ * @returns {string} An HTML string for toasts, or an empty string when there are no toasts.
  */
-function renderToastMarkup(message) {
-    if (!message) {
+function renderToastMarkup(toast) {
+	if (!toast) {
+        return '';
+    }
+
+    const normalized = Array.isArray(toast)
+        ? toast
+        : [toast];
+
+    const allowed = new Set(['info', 'success', 'warning', 'error']);
+
+    const items = normalized.map((entry) => {
+		const payload = typeof entry === 'string'
+			? { message: entry, type: 'info' }
+			: { message: entry?.message ?? '', type: entry?.type ?? 'info' };
+
+		if (!payload.message) {
+			return '';
+		}
+
+		const toastType = allowed.has(payload.type) ? payload.type : 'info';
+		const toneClass = `toast-${toastType}`;
+		const role = toastType === 'error' || toastType === 'warning' ? 'alert' : 'status';
+
+		return `
+			<div class="toast ${toneClass}" role="${role}">
+				<p class="toast-message">${escapeHtml(payload.message)}</p>
+			</div>
+		`;
+    }).join('');
+
+    if (!items.trim()) {
         return '';
     }
 
     return `
-		<div class="toast-stack" aria-live="polite" aria-atomic="true">
-			<div class="toast toast-info" role="status">
-				<p class="toast-message">${escapeHtml(message)}</p>
-			</div>
+		<div class="toast-stack" id="toast-region" role="alert" aria-live="assertive" aria-atomic="true" aria-relevant="additions text">
+			${items}
 		</div>
 	`;
 }
@@ -353,24 +444,37 @@ export function renderDeckList(decks) {
  * @param {Array} cards - A list of card objects with id, front, and back text.
  * @returns {string} An HTML string for the full card list.
  */
-export function renderCardList(cards) {
+export function renderCardList(cards, deckName = 'Selected deck') {
     if (!Array.isArray(cards) || cards.length === 0) {
         return renderEmptyState('No cards match the current view.');
     }
 
     const items = cards.map((card) => {
+        const cardId = card?.id ?? '';
         const front = card?.front ?? '';
         const back = card?.back ?? '';
+        const deleteLabel = `Delete card: ${front || 'Untitled card'}`;
 
         return `
-			<div class="card hover-lift">
-				<div class="card-front">${escapeHtml(front)}</div>
-				<div class="card-back">${escapeHtml(back)}</div>
-			</div>
+			<li class="card-list-item">
+				<article class="card hover-lift" aria-label="Flashcard preview">
+					<div class="card-list-head">
+						<div class="card-front card-line-truncate">${escapeHtml(front)}</div>
+						<div class="card-item-actions" aria-label="Card actions">
+							<button class="btn btn-ghost press-down card-item-action-btn" type="button" data-action="delete-card" data-id="${escapeHtml(cardId)}" aria-label="${escapeHtml(deleteLabel)}">Delete</button>
+						</div>
+					</div>
+					<div class="card-back card-line-truncate card-list-back">${escapeHtml(back)}</div>
+				</article>
+			</li>
 		`;
     }).join('');
 
-    return items;
+    return `
+		<ul class="card-list" id="card-list" aria-label="Cards in ${escapeHtml(deckName)}" aria-live="polite">
+			${items}
+		</ul>
+	`;
 }
 
 /**
