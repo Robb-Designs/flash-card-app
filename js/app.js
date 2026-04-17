@@ -15,6 +15,7 @@
  * - Central render cycle
  */
 
+alert('Hello from app.js!');
 // Imports
 import { init as storeInit, getLastActiveDeck } from './store.js';
 import { loadDecks, createDeck, deleteDeck, selectDeck } from './decks.js';
@@ -304,3 +305,5 @@ function render() {
 
 // Export init for external call
 export { init };
+
+init();
