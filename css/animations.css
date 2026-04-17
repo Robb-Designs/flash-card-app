@@ -15,12 +15,17 @@
 
 /* Card flip */
 .card-flip {
+	position: relative;
+	width: 100%;
+	min-height: 20rem;
 	perspective: 1000px;
-    transform-style: preserve-3d;
 }
 
 .card-flip-inner {
-    will-change: transform;
+	position: relative;
+	width: 100%;
+	min-height: inherit;
+	will-change: transform;
 	transform-style: preserve-3d;
 	transition: transform var(--duration-slow) var(--ease-standard), opacity var(--duration-slow) var(--ease-standard);
 }
@@ -31,7 +36,16 @@
 
 .card-flip-front,
 .card-flip-back {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	-webkit-backface-visibility: hidden;
 	backface-visibility: hidden;
+}
+
+.card-flip-front {
+	transform: rotateY(0deg);
 }
 
 .card-flip-back {
@@ -139,6 +153,27 @@
 	.press-down:active,
 	.press-down.is-pressed {
 		transform: none !important;
+	}
+
+	.card-flip-front,
+	.card-flip-back {
+		transition: opacity 1ms linear !important;
+	}
+
+	.card-flip .card-flip-front {
+		opacity: 1;
+	}
+
+	.card-flip .card-flip-back {
+		opacity: 0;
+	}
+
+	.card-flip.is-flipped .card-flip-front {
+		opacity: 0;
+	}
+
+	.card-flip.is-flipped .card-flip-back {
+		opacity: 1;
 	}
 
 	.fade-in,

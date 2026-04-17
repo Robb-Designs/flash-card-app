@@ -1,0 +1,66 @@
+/*
+ * study.css
+ * Study-mode refinements only.
+ */
+
+.view-study {
+	background: var(--color-surface-alt);
+	padding: var(--space-7);
+}
+
+.study-container {
+	max-width: 720px;
+	gap: var(--space-6);
+}
+
+.study-container .card {
+	width: 100%;
+	max-width: 720px;
+	padding: var(--space-6);
+	box-shadow: var(--shadow-card), var(--shadow-card);
+}
+
+.study-container .card-front {
+	margin-bottom: var(--space-4);
+	color: var(--color-text-primary);
+	font-size: 1.25rem;
+	line-height: 1.55;
+}
+
+.study-container .card-back {
+	margin-top: var(--space-3);
+	color: var(--color-text-secondary);
+	font-size: 1.0625rem;
+	line-height: 1.65;
+}
+
+.study-controls {
+	margin-top: var(--space-2);
+	gap: var(--space-4);
+}
+
+.study-progress-text {
+	color: var(--color-text-muted);
+	font-family: var(--font-ui);
+	font-size: 0.875rem;
+	line-height: 1.4;
+	text-align: center;
+}
+
+@media (max-width: 767px) {
+	.view-study {
+		padding: var(--space-5);
+	}
+
+	.study-container {
+		gap: var(--space-5);
+	}
+
+	.study-container .card {
+		padding: var(--space-5);
+	}
+
+	.study-controls {
+		gap: var(--space-3);
+	}
+}
