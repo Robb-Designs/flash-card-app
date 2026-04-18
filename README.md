@@ -27,8 +27,6 @@ A clean, accessible, and responsive flashcards web app built with Vanilla JavaSc
 - [Quality, Accessibility, and Design Notes](#quality-accessibility-and-design-notes)
 - [Known Limitations](#known-limitations)
 - [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Demo Preview
 
