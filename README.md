@@ -2,6 +2,34 @@
 
 A clean, accessible, and responsive flashcards web app built with Vanilla JavaScript, designed for fast deck creation, focused study sessions, and distraction-free review.
 
+## Table of Contents
+
+- [Demo Preview](#demo-preview)
+  - [Home View](#home-view)
+  - [Deck View](#deck-view)
+  - [Study View](#study-view)
+  - [Mobile View](#mobile-view)
+- [Features](#features)
+  - [Core Product Features](#core-product-features)
+  - [UX and Interface Features](#ux-and-interface-features)
+  - [Accessibility Features](#accessibility-features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Data Model and Persistence](#data-model-and-persistence)
+  - [Storage Keys](#storage-keys)
+  - [Data Shape (High-Level)](#data-shape-high-level)
+- [Responsive Design](#responsive-design)
+- [Getting Started](#getting-started)
+  - [Option 1: Open Directly](#option-1-open-directly)
+  - [Option 2: Serve Locally (Recommended)](#option-2-serve-locally-recommended)
+- [Project Structure](#project-structure)
+- [Usage Guide](#usage-guide)
+- [Quality, Accessibility, and Design Notes](#quality-accessibility-and-design-notes)
+- [Known Limitations](#known-limitations)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Demo Preview
 
 ### Home View
