@@ -4,21 +4,29 @@ A clean, accessible, and responsive flashcards web app built with Vanilla JavaSc
 
 ## Demo Preview
 
-Use this section for GitHub screenshots (recommended: desktop + mobile).
+### Home View
 
-- Home view (decks sidebar + empty state)
-- Deck view (search + card list)
-- Study view (flip card + controls)
-- Mobile view (topbar + off-canvas sidebar)
-
-Example screenshot block:
-
-```md
 ![Home view](docs/screenshots/home.png)
+
+The main dashboard shows the deck sidebar, primary workspace, and the app's clean study-first layout.
+
+### Deck View
+
 ![Deck view](docs/screenshots/deck.png)
+
+The deck screen focuses on card management with search, card previews, and quick actions.
+
+### Study View
+
 ![Study view](docs/screenshots/study.png)
+
+Study mode presents one card at a time with flip interaction and streamlined review controls.
+
+### Mobile View
+
 ![Mobile view](docs/screenshots/mobile.png)
-```
+
+On smaller screens, the app switches to a mobile-first navigation pattern with an off-canvas sidebar and responsive study layout.
 
 ## Features
 
