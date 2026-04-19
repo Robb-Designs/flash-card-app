@@ -27,6 +27,7 @@ A clean, accessible, and responsive flashcards web app built with Vanilla JavaSc
 - [Quality, Accessibility, and Design Notes](#quality-accessibility-and-design-notes)
 - [Known Limitations](#known-limitations)
 - [Roadmap](#roadmap)
+- [Reflection: My Thoughts](#reflection-my-thoughts)
 
 ## Demo Preview
 
@@ -223,3 +224,22 @@ These docs describe implementation constraints, expected UX behavior, and design
 - Add automated tests (unit + integration smoke tests).
 - Add optional backend sync for multi-device continuity.
 
+## Reflection: My Thoughts
+
+This was my first time seriously using AI in my coding workflow, and it made a noticeable difference. Copilot created a more efficient environment.
+
+
+
+
+Where AI saved me the most time was on structure and repetitive work. Things like responsive layout updates, organizing sections, and writing cleaner UI code got done much quicker than if I did everything from scratch. Before I began, I created some instructions for Copilot in MD files and had Copilot scan these files. I made that as a baseline so the AI wouldn't steer too far away from the topic of this project.
+
+
+
+
+One pitfall to using AI during a workflow such as this is inconsistencies in code quality. Sometimes AI creates bugs that you have to search for and find, which was the downside in this project. For example, a bug I learned a lot from was the dark mode toggle animation not working. After setting up the starter code for Copilot, I had it read the instructions and create a plan based off my code for implementation, and then execution began. At first, it looked like the CSS was correct, but the animation still did not show. The real issue was that the whole screen was re-rendering, so the animation could not run properly. The fix was to update only the toggle state directly instead of reloading the full view.
+
+
+
+
+
+The biggest prompt lesson I learned was specificity. When I asked for broad changes, I got broad output. When I asked for the plan first, a minimal patch only, and exact changes, the output became much better and less overwhelming. AI helped me build faster, but I still had to review, test, and decide what made sense.
