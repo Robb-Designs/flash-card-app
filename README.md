@@ -2,8 +2,13 @@
 
 A clean, accessible, and responsive flashcards web app built with Vanilla JavaScript, designed for fast deck creation, focused study sessions, and distraction-free review.
 
+## Live Demo
+
+[Open the deployed app](https://robb-designs.github.io/flash-card-app/)
+
 ## Table of Contents
 
+- [Live Demo](#live-demo)
 - [Demo Preview](#demo-preview)
   - [Home View](#home-view)
   - [Deck View](#deck-view)
@@ -30,6 +35,8 @@ A clean, accessible, and responsive flashcards web app built with Vanilla JavaSc
 - [Reflection: My Thoughts](#reflection-my-thoughts)
 
 ## Demo Preview
+
+Try the app here: [Live Website](https://robb-designs.github.io/flash-card-app/)
 
 ### Home View
 
